@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Supply Chain Forecast & Inventory Optimization</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+  <div class="container py-4">
+    <h1 class="mb-3">Intelligent Supply Chain — Forecast & Inventory UI</h1>
+
+    <p class="lead">Upload your historical demand CSV (columns: <code>date</code>, <code>demand</code>) and run forecasting + inventory calculation agents.</p>
+
+    {% if error %}
+      <div class="alert alert-danger">{{ error }}</div>
+    {% endif %}
+
+    <form method="post" enctype="multipart/form-data" class="card p-3 mb-4">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">Upload dataset (CSV)</label>
+          <input type="file" name="dataset" accept=".csv" class="form-control" required>
+          <div class="form-text">CSV must include <code>date</code> and <code>demand</code> columns.</div>
+        </div>
+
+        <div class="col-md-2">
+          <label class="form-label">Forecast Horizon (days)</label>
+          <input type="number" name="horizon" value="14" min="1" class="form-control">
+        </div>
+
+        <div class="col-md-2">
+          <label class="form-label">Lead time (days)</label>
+          <input type="number" name="lead_time" value="7" min="1" class="form-control">
+        </div>
+
+        <div class="col-md-2">
+          <label class="form-label">Service level (0-1)</label>
+          <input type="number" name="service_level" value="0.95" step="0.01" min="0.5" max="0.99" class="form-control">
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label">Order Cost (S)</label>
+          <input type="number" name="order_cost" value="50" step="0.01" class="form-control">
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label">Holding cost per unit (H)</label>
+          <input type="number" name="holding_cost" value="0.5" step="0.01" class="form-control">
+        </div>
+
+        <div class="col-12 text-end">
+          <button class="btn btn-primary" type="submit">Run Agents</button>
+        </div>
+      </div>
+    </form>
+
+    <div class="row">
+      <div class="col-lg-8">
+        <div class="card mb-3 p-3">
+          <h5>Forecast Chart</h5>
+          {% if plot_img %}
+            <img src="data:image/png;base64,{{ plot_img }}" alt="forecast" class="img-fluid border">
+          {% else %}
+            <div class="placeholder p-5 text-center">No forecast produced yet. Upload dataset and run.</div>
+          {% endif %}
+        </div>
+
+        <div class="card p-3 mb-3">
+          <h5>Forecast Table</h5>
+          {% if forecast_table %}
+            <div class="table-responsive">{{ forecast_table | safe }}</div>
+          {% else %}
+            <div class="text-muted">Forecast table will appear here after running agents.</div>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="col-lg-4">
+        <div class="card p-3 mb-3">
+          <h5>Inventory Recommendations</h5>
+          {% if metrics %}
+            <ul class="list-unstyled">
+              <li><strong>Mean daily demand:</strong> {{ metrics.mean_daily_demand }}</li>
+              <li><strong>Annual demand (est):</strong> {{ metrics.annual_demand_estimate }}</li>
+              <li><strong>EOQ (units):</strong> {{ metrics.EOQ }}</li>
+              <li><strong>Safety stock (units):</strong> {{ metrics.safety_stock }}</li>
+              <li><strong>Reorder point (units):</strong> {{ metrics.reorder_point }}</li>
+              <li><strong>Lead time (days):</strong> {{ metrics.lead_time_days }}</li>
+            </ul>
+          {% else %}
+            <div class="text-muted">Run the model to see inventory metrics.</div>
+          {% endif %}
+        </div>
+
+        <div class="card p-3">
+          <h5>Agent Log</h5>
+          {% if agent_log %}
+            <ol>
+              {% for e in agent_log %}
+                <li>{{ e }}</li>
+              {% endfor %}
+            </ol>
+          {% else %}
+            <div class="text-muted">Agent messages will appear here.</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <footer class="mt-4 text-muted small">
+      Expected CSV format: two columns <code>date</code> (YYYY-MM-DD) and <code>demand</code>. Example rows: <br>
+      <code>2025-09-01, 120</code><br>
+    </footer>
+  </div>
+</body>
+</html>
